@@ -168,7 +168,7 @@
  * :c:macro:`__discard` on Clang.
  */
 #undef __error_if_used
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #define __error_if_used(msg) __attribute__((error(msg)))
 #else
 #define __error_if_used(msg) __discard

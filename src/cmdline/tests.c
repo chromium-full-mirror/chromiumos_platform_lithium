@@ -12,7 +12,7 @@ DEFTEST("lithium.cmdline.smoke", {})
 {
 	const char *const argv[] = { "foo", NULL };
 
-	struct li_cmdline spec;
+	struct li_cmdline spec = { 0 };
 	EXPECT(li_cmdline_parse(&spec, argv, NULL) == LI_CMDLINE_CONTINUE);
 }
 

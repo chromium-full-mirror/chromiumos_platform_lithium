@@ -179,7 +179,7 @@ static int handle_waitpid(pid_t pid, int status)
 	}
 
 	if (!(test->priv.state == _LI_UNIT_RUNNING ||
-	      _LI_UNIT_PENDING_DEADLINE_EXCEEDED)) {
+	      test->priv.state == _LI_UNIT_PENDING_DEADLINE_EXCEEDED)) {
 		fprintf(stderr, "Invalid state transition: %s -> %s\n",
 			test_state_pretty_print[test->priv.state],
 			test_state_pretty_print[test->priv.state]);

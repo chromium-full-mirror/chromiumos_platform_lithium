@@ -3,11 +3,11 @@
 # found in the LICENSE file.
 
 SHELL:=/bin/bash
-CC:=gcc
-LD:=$(CC)
-AR:=ar
+CC?=clang
+CCLD?=$(CC)
+AR?=llvm-ar
 LIBS:=
-FLAGS_release:=-O2 -flto
+FLAGS_release:=-O2
 FLAGS_debug:=-Og -ggdb3 -DLITHIUM_TEST_BUILD
 COMMONFLAGS:=-Werror -Wall
 CFLAGS:=-std=gnu17 $(COMMONFLAGS) -Iinclude -fPIC
@@ -50,6 +50,12 @@ cmd = @$(call cmd_$(1),$(2))
 endif
 endif
 
+ifeq ($(shell $(CCLD) -v 2>&1 | grep -c "clang version"),1)
+SONAME_FLAG:=--soname
+else
+SONAME_FLAG:=-soname
+endif
+
 get_target = $(word 2,$(subst /, ,$@))
 target_flags = $(FLAGS_$(get_target))
 
@@ -59,13 +65,13 @@ cmd_c_to_o_name = CC
 cmd_c_to_o = $(CC) $(CFLAGS) $(target_flags) $(DEPFLAGS) -c $< -o $@
 
 cmd_o_to_elf_name = LD
-cmd_o_to_elf = $(LD) $(LDFLAGS) $(target_flags) $^ $(LIBS) -o $@
+cmd_o_to_elf = $(CCLD) $(LDFLAGS) $(target_flags) $^ $(LIBS) -o $@
 
 cmd_o_to_ar_name = AR
 cmd_o_to_ar = $(AR) rc $@ $^
 
 cmd_o_to_so_name = LIB
-cmd_o_to_so = $(LD) -shared -o $@ $^
+cmd_o_to_so = $(CCLD) -shared -Wl,$(SONAME_FLAG),$(notdir $@) -o $@ $^
 
 cmd_clean_name = CLEAN
 cmd_clean = rm -rf $(1)
@@ -104,15 +110,15 @@ $(OUTDIR)/release/%.o: %.c
 
 .PHONY: run-%
 run-%:
-	$(call cmd,run,$(OUTDIR)/release/$(call binpath,$(patsubst run-%,%,$@)))
+	+$(call cmd,run,$(OUTDIR)/release/$(call binpath,$(patsubst run-%,%,$@)))
 
 .PHONY: debug-%
 debug-%:
-	$(call cmd,gdb,$(OUTDIR)/debug/$(call binpath,$(patsubst debug-%,%,$@)))
+	+$(call cmd,gdb,$(OUTDIR)/debug/$(call binpath,$(patsubst debug-%,%,$@)))
 
 .PHONY: run-tests
 run-tests:
-	$(call cmd,run,$(OUTDIR)/debug/$(call binpath,run_tests))
+	+$(call cmd,run,$(OUTDIR)/debug/$(call binpath,run_tests))
 
 .PHONY: clean
 clean:
